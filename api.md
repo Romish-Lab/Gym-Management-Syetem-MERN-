@@ -1,69 +1,132 @@
-# API Documentation
+# API Documentation — Gym Management System
 
 Base URL: `http://localhost:8000/api/v1`
 
----
-
-## Auth Routes `/api/v1/auth`
-
-| Method | Endpoint                  | Description            | Access    | Body                                               |
-| ------ | ------------------------- | ---------------------- | --------- | -------------------------------------------------- |
-| POST   | `/register`               | Register new user      | Public    | `full_name, email, password, phone, profile_image` |
-| POST   | `/login`                  | Login user             | Public    | `email, password`                                  |
-| DELETE | `/delete/:id`             | Delete user            | Admin     | -                                                  |
-| PUT    | `/update/:id`             | Update user            | Admin     | `full_name, phone, profile_image`                  |
-| GET    | `/profile/:id`            | Get user profile       | All roles | -                                                  |
-| POST   | `/change-password`        | Change password        | All roles | `currentPassword, newPassword`                     |
-| PUT    | `/change-profile-picture` | Update profile picture | All roles | `profile_image`                                    |
+All protected routes require a valid JWT token stored in an `access_token` cookie, set automatically on login or registration.
 
 ---
 
-## Brand Routes `/api/v1/brands`
+## Auth & User Routes
 
-| Method | Endpoint | Description     | Access | Body               |
-| ------ | -------- | --------------- | ------ | ------------------ |
-| GET    | `/`      | Get all brands  | Public | -                  |
-| GET    | `/:id`   | Get brand by ID | Public | -                  |
-| POST   | `/`      | Create brand    | Admin  | `name, brand_logo` |
-| PUT    | `/:id`   | Update brand    | Admin  | `name, brand_logo` |
-| DELETE | `/:id`   | Delete brand    | Admin  | -                  |
+### Public Routes
+
+| Method | Endpoint | Description | Body |
+|---|---|---|---|
+| POST | `/register` | Register new user | `name, email, password, avatar` |
+| POST | `/login` | Login user | `email, password` |
+| POST | `/password/forgot` | Send password reset email | `email` |
+| PUT | `/password/reset/:token` | Reset password using token | `password, confirmPassword` |
+| GET | `/logout` | Logout current user | — |
+
+### Protected Routes (All Authenticated Users)
+
+| Method | Endpoint | Description | Body |
+|---|---|---|---|
+| GET | `/me` | Get logged in user profile | — |
+| PUT | `/me/update` | Update profile info | `name, email, avatar` |
+| PUT | `/password/update` | Change password | `oldPassword, newPassword, confirmPassword` |
+
+### Admin Routes
+
+| Method | Endpoint | Description | Body |
+|---|---|---|---|
+| GET | `/admin/users` | Get all users | — |
+| GET | `/admin/user/:id` | Get single user by ID | — |
+| PUT | `/admin/user/:id` | Update user role | `role` |
+| DELETE | `/admin/user/:id` | Delete user | — |
+
+### Trainer Routes
+
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| GET | `/trainer/portal` | Get trainer portal data | Trainer, Admin |
 
 ---
 
-## Category Routes `/api/v1/categories`
+## Class Routes
 
-| Method | Endpoint | Description        | Access | Body                  |
-| ------ | -------- | ------------------ | ------ | --------------------- |
-| GET    | `/`      | Get all categories | Public | -                     |
-| GET    | `/:id`   | Get category by ID | Public | -                     |
-| POST   | `/`      | Create category    | Admin  | `name, category_logo` |
-| PUT    | `/:id`   | Update category    | Admin  | `name, category_logo` |
-| DELETE | `/:id`   | Delete category    | Admin  | -                     |
+### Public Routes
+
+| Method | Endpoint | Description | Query Params |
+|---|---|---|---|
+| GET | `/classes` | Get all classes | `keyword, category, price[gte], price[lte], ratings[gte], page` |
+| GET | `/class/:id` | Get single class details | — |
+| GET | `/reviews` | Get all reviews for a class | `id` (class id) |
+
+### Protected Routes (Authenticated Users)
+
+| Method | Endpoint | Description | Body |
+|---|---|---|---|
+| PUT | `/review` | Create or update a class review | `rating, comment, classId` |
+| DELETE | `/reviews` | Delete a review | `id` (review id), `classId` |
+
+### Admin Routes
+
+| Method | Endpoint | Description | Body |
+|---|---|---|---|
+| GET | `/admin/classes` | Get all classes (admin view) | — |
+| POST | `/admin/class/new` | Create new class | `name, description, price, category, capacity, schedule, requiredMembership, trainer, images` |
+| PUT | `/admin/class/:id` | Update class | `name, description, price, category, capacity, schedule` |
+| DELETE | `/admin/class/:id` | Delete class | — |
 
 ---
 
-## Product Routes `/api/v1/products`
+## Membership Routes
 
-| Method | Endpoint                | Description              | Access | Body                                                                    |
-| ------ | ----------------------- | ------------------------ | ------ | ----------------------------------------------------------------------- |
-| GET    | `/`                     | Get all products         | Public | -                                                                       |
-| GET    | `/:id`                  | Get product by ID        | Public | -                                                                       |
-| GET    | `/featured`             | Get featured products    | Public | -                                                                       |
-| GET    | `/new-arrivals`         | Get new arrivals         | Public | -                                                                       |
-| GET    | `/category/:categoryId` | Get products by category | Public | -                                                                       |
-| POST   | `/`                     | Create product           | Admin  | `name, description, price, stock, category, brand, cover_image, images` |
-| PUT    | `/:id`                  | Update product           | Admin  | `name, description, price, stock`                                       |
-| DELETE | `/:id`                  | Delete product           | Admin  | -                                                                       |
+### Protected Routes (Authenticated Users)
+
+| Method | Endpoint | Description | Body |
+|---|---|---|---|
+| POST | `/membership/new` | Create new membership | `enrolledClasses, healthInfo, membershipType, membershipDuration, itemsPrice, facilityPrice, processingFee, totalPrice, paymentInfo` |
+| GET | `/membership/:id` | Get single membership | — |
+| GET | `/memberships/me` | Get all memberships of logged in user | — |
+
+### Admin Routes
+
+| Method | Endpoint | Description | Body |
+|---|---|---|---|
+| GET | `/admin/memberships` | Get all memberships | — |
+| PUT | `/admin/membership/:id` | Update membership status | `status` |
+| DELETE | `/admin/membership/:id` | Delete membership | — |
+
+---
+
+## Payment Routes
+
+### Protected Routes (Authenticated Users)
+
+| Method | Endpoint | Description | Body |
+|---|---|---|---|
+| POST | `/payment/process` | Process Stripe payment | `amount` |
+| GET | `/stripeapikey` | Get Stripe publishable key | — |
 
 ---
 
 ## Role Types
 
-| Role          | Access Level                            |
-| ------------- | --------------------------------------- |
-| `USER`        | Own profile, browse, purchase           |
-| `ADMIN`       | Full CRUD on all resources              |
-| `SUPER_ADMIN` | All admin permissions + user management |
+| Role | Description | Access Level |
+|---|---|---|
+| `user` | Regular gym member / trainee | Own profile, browse classes, purchase memberships |
+| `trainer` | Gym trainer | Trainer portal, view assigned trainees |
+| `admin` | Administrator | Full CRUD on all resources |
+
+---
+
+## Membership Types
+
+| Type | Description |
+|---|---|
+| `Basic` | Access to basic classes |
+| `Standard` | Access to standard and basic classes |
+| `Premium` | Access to all classes |
+
+---
+
+## Membership Status Lifecycle
+
+```
+Processing → Active → Expired
+```
 
 ---
 
@@ -89,6 +152,16 @@ All endpoints return responses in this format:
 }
 ```
 
-## Authentication
+---
 
-All protected routes require a valid JWT token stored in an `access_token` cookie, set automatically on login or registration.
+## Class Categories
+
+`Yoga` | `Cardio` | `Strength Training` | `Zumba` | `CrossFit` | `Pilates` | `Martial Arts` | `Other`
+
+## Fitness Goals
+
+`Weight Loss` | `Muscle Gain` | `Flexibility` | `Endurance` | `General Fitness`
+
+## Experience Levels
+
+`Beginner` | `Intermediate` | `Advanced`
